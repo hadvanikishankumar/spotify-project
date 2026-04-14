@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import Navbar from './components/Navbar'
+import { PlayerProvider } from './context/PlayerContext'
+import Sidebar from './components/Sidebar'
+import MusicPlayer from './components/MusicPlayer'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
@@ -8,56 +10,72 @@ import Albums from './pages/Albums'
 import AlbumDetail from './pages/AlbumDetail'
 import UploadMusic from './pages/UploadMusic'
 import CreateAlbum from './pages/CreateAlbum'
+import Search from './pages/Search'
+import LikedSongs from './pages/LikedSongs'
+import Playlists from './pages/Playlists'
+import PlaylistDetail from './pages/PlaylistDetail'
+import Profile from './pages/Profile'
 
-// ProtectedRoute: If not logged in, redirect to /login
-// Used for pages both "user" and "artist" can see
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <div className="loading">Loading...</div>
-  if (!user) return <Navigate to="/login" />  // Redirect
-  return children  // Render the actual page
+  if (!user) return <Navigate to="/login" />
+  return children
 }
 
-// ArtistRoute: Only artists can access these pages
-// Non-artists get redirected to home
 function ArtistRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <div className="loading">Loading...</div>
   if (!user) return <Navigate to="/login" />
-  if (user.role !== 'artist') return <Navigate to="/" />  // Not an artist? go home
+  if (user.role !== 'artist') return <Navigate to="/" />
   return children
 }
 
-// AppRoutes must be INSIDE AuthProvider to use useAuth()
 function AppRoutes() {
-  return (
-    <>
-      <Navbar />   {/* Always visible (hides itself on auth pages) */}
+  const { user } = useAuth()
+
+  // Auth pages — no sidebar
+  if (!user) {
+    return (
       <Routes>
-        {/* Public routes - no login needed */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-
-        {/* Protected routes - need login */}
-        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        <Route path="/albums" element={<ProtectedRoute><Albums /></ProtectedRoute>} />
-        <Route path="/albums/:albumId" element={<ProtectedRoute><AlbumDetail /></ProtectedRoute>} />
-
-        {/* Artist-only routes */}
-        <Route path="/upload" element={<ArtistRoute><UploadMusic /></ArtistRoute>} />
-        <Route path="/create-album" element={<ArtistRoute><CreateAlbum /></ArtistRoute>} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
-    </>
+    )
+  }
+
+  return (
+    <div className="app-layout">
+      <Sidebar />
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/albums" element={<ProtectedRoute><Albums /></ProtectedRoute>} />
+          <Route path="/albums/:albumId" element={<ProtectedRoute><AlbumDetail /></ProtectedRoute>} />
+          <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+          <Route path="/liked" element={<ProtectedRoute><LikedSongs /></ProtectedRoute>} />
+          <Route path="/playlists" element={<ProtectedRoute><Playlists /></ProtectedRoute>} />
+          <Route path="/playlists/:playlistId" element={<ProtectedRoute><PlaylistDetail /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/upload" element={<ArtistRoute><UploadMusic /></ArtistRoute>} />
+          <Route path="/create-album" element={<ArtistRoute><CreateAlbum /></ArtistRoute>} />
+          <Route path="/login" element={<Navigate to="/" />} />
+          <Route path="/register" element={<Navigate to="/" />} />
+        </Routes>
+      </div>
+      <MusicPlayer />
+    </div>
   )
 }
 
 function App() {
   return (
-    // BrowserRouter enables URL-based navigation
     <BrowserRouter>
-      {/* AuthProvider wraps everything so all pages can access user state */}
       <AuthProvider>
-        <AppRoutes />
+        <PlayerProvider>
+          <AppRoutes />
+        </PlayerProvider>
       </AuthProvider>
     </BrowserRouter>
   )

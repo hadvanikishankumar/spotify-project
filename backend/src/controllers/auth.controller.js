@@ -1,4 +1,5 @@
 const userModel = require("../models/user.model");
+const musicModel = require("../models/music.model");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
@@ -105,4 +106,33 @@ async function logoutUser(req, res) {
     res.status(200).json({ message: "User logged out successfully" })
 }
 
-module.exports = { registerUser, loginUser, logoutUser }
+async function getProfile(req, res) {
+    const user = await userModel
+        .findById(req.user.id)
+        .select("-password")
+        .populate({ path: "likedSongs", populate: { path: "artist", select: "username" } })
+        .populate({ path: "recentlyPlayed", populate: { path: "artist", select: "username" } })
+
+    if (!user) return res.status(404).json({ message: "User not found" })
+
+    // If artist: also get their uploaded songs count
+    let uploadedCount = 0
+    if (user.role === "artist") {
+        uploadedCount = await musicModel.countDocuments({ artist: req.user.id })
+    }
+
+    res.status(200).json({
+        message: "Profile fetched",
+        user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            likedSongs: user.likedSongs,
+            recentlyPlayed: user.recentlyPlayed,
+            uploadedCount
+        }
+    })
+}
+
+module.exports = { registerUser, loginUser, logoutUser, getProfile }

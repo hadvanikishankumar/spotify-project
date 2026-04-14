@@ -3,16 +3,16 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
 const musicRoutes = require('./routes/music.routes');
+const playlistRoutes = require('./routes/playlist.routes');
 
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ CORS — multiple origins support
 const allowedOrigins = [
-  'http://localhost:5173',                         // local dev
-  process.env.FRONTEND_URL                         // production Vercel URL
+  'http://localhost:5173',
+  process.env.FRONTEND_URL
 ];
 
 app.use(cors({
@@ -23,10 +23,11 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true    // cookies ke liye zaruri hai
+  credentials: true
 }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/music', musicRoutes);
+app.use('/api/playlists', playlistRoutes);
 
 module.exports = app;

@@ -1,16 +1,25 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useState } from 'react'
 
 function Navbar() {
-  const { user, logout } = useAuth()   // Get user and logout from context
-  const navigate = useNavigate()        // For programmatic navigation
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleLogout = async () => {
-    await logout()          // Clear user state + cookie
-    navigate('/login')      // Send to login page
+    await logout()
+    navigate('/login')
   }
 
-  // If user is not logged in, don't show navbar at all
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery('')
+    }
+  }
+
   if (!user) return null
 
   return (
@@ -22,19 +31,31 @@ function Navbar() {
       <div className="navbar-links">
         <Link to="/">Home</Link>
         <Link to="/albums">Albums</Link>
+        <Link to="/liked">❤️ Liked</Link>
+        <Link to="/playlists">📋 Playlists</Link>
 
-        {/* These links ONLY show if the user is an artist */}
         {user.role === 'artist' && (
           <>
-            <Link to="/upload">Upload Music</Link>
+            <Link to="/upload">Upload</Link>
             <Link to="/create-album">Create Album</Link>
           </>
         )}
       </div>
 
+      {/* Search bar */}
+      <form className="navbar-search" onSubmit={handleSearch}>
+        <input
+          type="text"
+          placeholder="Search songs, albums..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-input"
+        />
+        <button type="submit" className="search-btn">🔍</button>
+      </form>
+
       <div className="navbar-user">
-        {/* Show username and role badge */}
-        <span>👤 {user.username} <em>({user.role})</em></span>
+        <Link to="/profile" className="profile-link">👤 {user.username}</Link>
         <button onClick={handleLogout} className="btn-logout">Logout</button>
       </div>
     </nav>

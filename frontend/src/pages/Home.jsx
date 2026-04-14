@@ -1,24 +1,22 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { API } from '../context/AuthContext'
+import { usePlayer } from '../context/PlayerContext'
 import MusicCard from '../components/MusicCard'
-import MusicPlayer from '../components/MusicPlayer'
 
 function Home() {
   const [musics, setMusics] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [currentMusic, setCurrentMusic] = useState(null)  // Track what's playing
+  const { playFromQueue, currentMusic, initLikedSongs } = usePlayer()
 
-  // useEffect with [] = run once when page loads
   useEffect(() => {
     fetchMusics()
+    fetchLikedIds()
   }, [])
 
   const fetchMusics = async () => {
     try {
-      // withCredentials: true = send JWT cookie with request
-      // Backend's authUser middleware reads this cookie
       const res = await axios.get(`${API}/music/`, { withCredentials: true })
       setMusics(res.data.musics)
     } catch (err) {
@@ -28,13 +26,29 @@ function Home() {
     }
   }
 
+  const fetchLikedIds = async () => {
+    try {
+      const res = await axios.get(`${API}/music/liked`, { withCredentials: true })
+      const ids = res.data.musics.map((m) => m._id)
+      initLikedSongs(ids)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const handlePlay = (music) => {
-    // If clicking same song that's playing → stop it
-    // Otherwise → play the new song
-    if (currentMusic?._id === music._id) {
-      setCurrentMusic(null)
-    } else {
-      setCurrentMusic(music)
+    const index = musics.findIndex((m) => m._id === music._id)
+    playFromQueue(musics, index)
+  }
+
+  const handleDelete = async (musicId) => {
+    if (!window.confirm('Kya aap is song ko delete karna chahte ho?')) return
+
+    try {
+      await axios.delete(`${API}/music/${musicId}`, { withCredentials: true })
+      setMusics((prev) => prev.filter((m) => m._id !== musicId))
+    } catch (err) {
+      alert('Delete failed')
     }
   }
 
@@ -49,23 +63,17 @@ function Home() {
         <p>No music uploaded yet.</p>
       ) : (
         <div className="music-list">
-          {/* Map over every song and render a MusicCard */}
-          {musics.map(music => (
+          {musics.map((music) => (
             <MusicCard
-              key={music._id}         // React needs unique key for lists
+              key={music._id}
               music={music}
               onPlay={handlePlay}
-              isPlaying={currentMusic?._id === music._id}  // True for currently playing
+              isPlaying={currentMusic?._id === music._id}
+              onDelete={handleDelete}
             />
           ))}
         </div>
       )}
-
-      {/* Fixed player at bottom of screen */}
-      <MusicPlayer
-        currentMusic={currentMusic}
-        onClose={() => setCurrentMusic(null)}
-      />
     </div>
   )
 }

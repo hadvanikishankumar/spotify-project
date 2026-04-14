@@ -3,81 +3,54 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function Login() {
-  // Controlled inputs — React manages input values via state
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
-  const [error, setError] = useState('')      // Error message to show user
-  const [loading, setLoading] = useState(false) // Disable button while submitting
-
+  const [formData, setFormData] = useState({ email: '', password: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  // One handler for ALL inputs — uses input's name attribute as key
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,                    // Keep existing values
-      [e.target.name]: e.target.value // Update only changed field
-    })
-  }
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
-    e.preventDefault()    // IMPORTANT: prevents page reload on form submit
+    e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
-      await login(formData)   // Calls backend POST /api/auth/login
-      navigate('/')           // On success, go to home
+      await login(formData)
+      navigate('/')
     } catch (err) {
-      // err.response.data.message = backend error message
       setError(err.response?.data?.message || 'Login failed')
     } finally {
-      setLoading(false)   // Always re-enable button
+      setLoading(false)
     }
   }
 
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>Login</h2>
+        <div className="auth-logo">🎵</div>
+        <h2>Welcome back</h2>
+        <p className="auth-subtitle">Log in to Rhythmix</p>
 
-        {/* Only render error paragraph if there IS an error */}
         {error && <p className="error-msg">{error}</p>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
-            <input
-              type="email"
-              name="email"           // Must match formData key
-              value={formData.email} // Controlled input
-              onChange={handleChange}
-              placeholder="Enter email"
-              required
-            />
+            <input type="email" name="email" value={formData.email}
+              onChange={handleChange} placeholder="Enter your email" required />
           </div>
-
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter password"
-              required
-            />
+            <input type="password" name="password" value={formData.password}
+              onChange={handleChange} placeholder="Enter your password" required />
           </div>
-
-          {/* disabled while loading so user can't double-submit */}
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 
-        <p>Don't have an account? <Link to="/register">Register</Link></p>
+        <p>Don't have an account? <Link to="/register">Sign up</Link></p>
       </div>
     </div>
   )

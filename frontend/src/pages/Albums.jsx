@@ -11,7 +11,6 @@ function Albums() {
   useEffect(() => {
     const fetchAlbums = async () => {
       try {
-        // Calls GET /api/music/albums
         const res = await axios.get(`${API}/music/albums`, { withCredentials: true })
         setAlbums(res.data.albums)
       } catch (err) {
@@ -22,6 +21,16 @@ function Albums() {
     }
     fetchAlbums()
   }, [])
+
+  const handleDelete = async (albumId) => {
+    if (!window.confirm('Kya aap is album ko delete karna chahte ho?')) return
+    try {
+      await axios.delete(`${API}/music/album/${albumId}`, { withCredentials: true })
+      setAlbums(prev => prev.filter(a => a._id !== albumId))
+    } catch (err) {
+      alert('Delete failed')
+    }
+  }
 
   if (loading) return <div className="loading">Loading albums...</div>
   if (error) return <div className="error">{error}</div>
@@ -34,7 +43,7 @@ function Albums() {
       ) : (
         <div className="albums-grid">
           {albums.map(album => (
-            <AlbumCard key={album._id} album={album} />
+            <AlbumCard key={album._id} album={album} onDelete={handleDelete} />
           ))}
         </div>
       )}
