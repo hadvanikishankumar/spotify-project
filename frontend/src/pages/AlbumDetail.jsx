@@ -99,7 +99,7 @@ function AlbumDetail() {
         </div>
       </div>
 
-      <div style={{ padding: '0 2.5rem 2rem' }}>
+      <div style={{ padding: '0 0rem 10rem' }}>
         {album.musics?.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">🎵</span>
